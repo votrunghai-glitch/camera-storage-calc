@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tính dung lượng lưu trữ camera</title>
+  <meta name="description" content="Công cụ ước tính dung lượng HDD cho hệ thống camera giám sát (NVR) theo số camera, độ phân giải, codec, FPS và số ngày lưu.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Tính dung lượng lưu trữ camera</h1>
+    <p class="sub">Ước tính số TB cần cho NVR và gợi ý ổ cứng Surveillance</p>
+  </header>
+
+  <main class="layout">
+    <!-- CỘT NHẬP LIỆU -->
+    <section class="inputs">
+      <div id="groups"></div>
+      <button type="button" id="add-group" class="btn-secondary">+ Thêm nhóm camera</button>
+
+      <div class="card">
+        <h2>Thiết lập chung</h2>
+        <div class="grid">
+          <label>Số ngày lưu
+            <input type="number" id="days" min="1" max="365" step="1" value="30" inputmode="numeric">
+          </label>
+          <label>Dự phòng (%)
+            <input type="number" id="reserve" min="0" max="50" step="1" value="10" inputmode="numeric">
+          </label>
+          <label>Cấu hình ổ
+            <select id="raid">
+              <option value="none">Không RAID</option>
+              <option value="raid1">RAID 1 (mirror)</option>
+              <option value="raid5">RAID 5</option>
+              <option value="raid6">RAID 6</option>
+            </select>
+          </label>
+          <label>Số khe HDD của NVR
+            <select id="slots">
+              <option value="1">1 khe</option>
+              <option value="2">2 khe</option>
+              <option value="4" selected>4 khe</option>
+              <option value="8">8 khe</option>
+              <option value="16">16 khe</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- CỘT KẾT QUẢ -->
+    <section class="results" aria-live="polite">
+      <div class="card highlight">
+        <h2>Kết quả</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Dung lượng cần</span>
+            <span class="stat-value" id="r-total">–</span>
+            <span class="stat-note" id="r-total-note"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Băng thông ghi</span>
+            <span class="stat-value" id="r-bw">–</span>
+            <span class="stat-note">Tổng incoming vào NVR</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Số camera</span>
+            <span class="stat-value" id="r-cams">–</span>
+            <span class="stat-note" id="r-perday"></span>
+          </div>
+        </div>
+        <p class="reco" id="r-reco"></p>
+        <ul class="warnings" id="r-warn"></ul>
+      </div>
+
+      <div class="card">
+        <h2>Gợi ý ổ cứng Surveillance</h2>
+        <div class="table-wrap">
+          <table id="hdd-table">
+            <thead>
+              <tr><th>Ổ</th><th>Số ổ</th><th>Tổng thô</th><th>Dùng được</th><th>Ghi chú</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Chi tiết theo nhóm</h2>
+        <div class="table-wrap">
+          <table id="group-table">
+            <thead>
+              <tr><th>Nhóm</th><th>Bitrate/cam</th><th>Mbps</th><th>GB/ngày</th><th>TB</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <details class="card">
+        <summary><h2>Bảng bitrate tham khảo &amp; công thức</h2></summary>
+        <p class="muted">Bitrate mặc định là <strong>giá trị ước tính</strong> cho cảnh trung bình, VBR, chất lượng cao, 25 fps. Thực tế phụ thuộc cảnh quay (cây lá, đường phố, ban đêm có IR thường cao hơn), cấu hình CBR/VBR và hãng camera. Nếu đã biết bitrate thật, hãy nhập ở ô “Bitrate tùy chỉnh”.</p>
+        <div class="table-wrap">
+          <table id="ref-table">
+            <thead>
+              <tr><th>Độ phân giải</th><th>H.264</th><th>H.265</th><th>H.265+ / Smart</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted">FPS khác 25 được quy đổi tỉ lệ thuận (ví dụ 15 fps ≈ 60%). H.265+ (Hikvision) / Smart H.265+ (Dahua) giả định giảm ~50% so với H.265; cảnh nhiều chuyển động thì mức giảm ít hơn.</p>
+        <p class="formula">TB = Σ [số cam × bitrate (kbps) × 1000 ÷ 8 × 86 400 × số ngày × hệ số ghi] ÷ 10¹² × (1 + dự phòng)</p>
+        <p class="muted">Hệ số ghi = 1 khi ghi liên tục; = % thời gian có chuyển động khi ghi theo sự kiện (nên cộng thêm pre/post-record). “Dùng được” đã trừ ~3% cho định dạng; NVR hiển thị theo TiB (1 TB ≈ 0,909 TiB) nên số hiện trên NVR sẽ nhỏ hơn số in trên nhãn ổ.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Công cụ ước tính để tư vấn và báo giá nhanh. Với dự án lớn, đối chiếu thêm Disk Calculator của hãng hoặc bitrate đo thực tế.</p>
+  </footer>
+
+  <template id="group-tpl">
+    <div class="card group">
+      <div class="group-head">
+        <input type="text" class="g-name" aria-label="Tên nhóm" maxlength="40">
+        <button type="button" class="g-remove" aria-label="Xoá nhóm" title="Xoá nhóm">✕</button>
+      </div>
+      <div class="grid">
+        <label>Số camera
+          <input type="number" class="g-count" min="0" max="1024" step="1" inputmode="numeric">
+        </label>
+        <label>Độ phân giải
+          <select class="g-res"></select>
+        </label>
+        <label>Codec
+          <select class="g-codec"></select>
+        </label>
+        <label>FPS
+          <select class="g-fps">
+            <option>6</option><option>8</option><option>10</option><option>12</option>
+            <option>15</option><option>20</option><option>25</option><option>30</option>
+          </select>
+        </label>
+        <label>Chế độ ghi
+          <select class="g-mode">
+            <option value="continuous">Liên tục 24/7</option>
+            <option value="motion">Theo chuyển động</option>
+          </select>
+        </label>
+        <label class="g-activity-wrap">% thời gian có chuyển động
+          <input type="number" class="g-activity" min="1" max="100" step="1" inputmode="numeric">
+        </label>
+        <label class="span-2">Bitrate tùy chỉnh (kbps, để trống = tự tính)
+          <input type="number" class="g-custom" min="64" max="32768" step="64" inputmode="numeric" placeholder="">
+        </label>
+      </div>
+    </div>
+  </template>
+
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
