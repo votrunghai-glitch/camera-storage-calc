@@ -147,6 +147,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+#group-table td:first-child { white-space: normal; min-width: 7.5em; }
+@media (max-width: 480px) { table { font-size: 0.82rem; } th, td { padding: 8px 4px; } }
 tr.best td { background: var(--good-soft); color: var(--good); font-weight: 600; }
 tr.over td { color: var(--muted); }
 
