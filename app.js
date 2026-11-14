@@ -8,7 +8,7 @@
   // ===== THÔNG TIN CÔNG TY: sửa ở đây, hiện trên đầu trang và trên PDF =====
   var COMPANY = {
     name: 'Sao Mai Smartek',
-    phone: '0902 209 698'
+    phone: '0902209698'
   };
   // =========================================================================
 
@@ -193,7 +193,7 @@
     var head = el('div', 'rp-head');
     var left = el('div');
     left.appendChild(el('div', 'rp-company', COMPANY.name));
-    left.appendChild(el('div', 'rp-phone', 'Điện thoại: ' + COMPANY.phone));
+    left.appendChild(el('div', 'rp-phone', 'Hotline: ' + COMPANY.phone));
     head.appendChild(left);
     head.appendChild(el('div', 'rp-date', 'Ngày: ' + new Date().toLocaleDateString('vi-VN')));
     rep.appendChild(head);
@@ -244,7 +244,7 @@
 
     rep.appendChild(el('p', 'rp-foot',
       'Số liệu là ước tính theo bitrate tham khảo (VBR, cảnh trung bình); thực tế phụ thuộc cảnh quay và cấu hình camera. ' +
-      COMPANY.name + ' · ' + COMPANY.phone));
+      COMPANY.name + ' · Hotline: ' + COMPANY.phone));
   }
 
   // Tên file PDF gợi ý = tiêu đề trang lúc in
@@ -297,7 +297,7 @@
   // ---------- Khởi động ----------
   function init() {
     $('brand-name').textContent = COMPANY.name;
-    $('brand-phone').textContent = '☎ ' + COMPANY.phone;
+    $('brand-phone').textContent = '☎ Hotline: ' + COMPANY.phone;
     $('brand-phone').href = 'tel:' + COMPANY.phone.replace(/[^0-9+]/g, '');
     renderRefTable();
     var saved = load();
