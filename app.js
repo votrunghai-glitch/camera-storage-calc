@@ -82,6 +82,7 @@
   function readState() {
     return {
       project: $('project').value,
+      clientPhone: $('client-phone').value,
       days: $('days').value,
       reservePct: $('reserve').value,
       raid: $('raid').value,
@@ -200,6 +201,7 @@
 
     rep.appendChild(el('h1', 'rp-title', 'BÁO CÁO ƯỚC TÍNH DUNG LƯỢNG LƯU TRỮ CAMERA'));
     rep.appendChild(el('p', 'rp-project', 'Công trình: ' + (state.project.trim() || '……………………………………')));
+    rep.appendChild(el('p', 'rp-client', 'Điện thoại liên hệ: ' + (state.clientPhone.trim() || '……………………')));
 
     rep.appendChild(el('h2', null, 'Thiết lập chung'));
     rep.appendChild(table(['Số ngày lưu', 'Dự phòng', 'Cấu hình ổ', 'Số khe HDD'], [[
@@ -302,6 +304,7 @@
     renderRefTable();
     var saved = load();
     if (saved && saved.project) $('project').value = saved.project;
+    if (saved && saved.clientPhone) $('client-phone').value = saved.clientPhone;
     if (saved && Array.isArray(saved.groups) && saved.groups.length) {
       ['days', 'raid', 'slots'].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
       if (saved.reservePct != null) $('reserve').value = saved.reservePct;
