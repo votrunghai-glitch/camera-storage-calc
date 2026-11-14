@@ -5,6 +5,13 @@
 (function () {
   'use strict';
 
+  // ===== THÔNG TIN CÔNG TY: sửa ở đây, hiện trên đầu trang và trên PDF =====
+  var COMPANY = {
+    name: 'Sao Mai Smartek',
+    phone: '0902209698'
+  };
+  // =========================================================================
+
   var C = window.CamCalc;
   var STORAGE_KEY = 'camcalc-v1';
   var groupsEl = document.getElementById('groups');
@@ -74,6 +81,8 @@
 
   function readState() {
     return {
+      project: $('project').value,
+      clientPhone: $('client-phone').value,
       days: $('days').value,
       reservePct: $('reserve').value,
       raid: $('raid').value,
@@ -91,7 +100,10 @@
     tr.appendChild(td);
   }
 
+  var lastResult = null;
+
   function render(r) {
+    lastResult = r;
     $('r-total').textContent = r.needTB > 0 ? fmtTB(r.needTB) + ' TB' : '–';
     $('r-total-note').textContent = r.needTB > 0
       ? '≈ ' + fmtTB(r.needTiB) + ' TiB trên NVR · ' + nf0.format(r.days) + ' ngày'
@@ -146,6 +158,115 @@
     });
   }
 
+  // ---------- Báo cáo PDF ----------
+  var RAID_LABELS = { none: 'Không RAID', raid1: 'RAID 1 (mirror)', raid5: 'RAID 5', raid6: 'RAID 6' };
+  var MODE_LABELS = { continuous: 'Liên tục 24/7', motion: 'Theo chuyển động' };
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function table(head, rows) {
+    var t = el('table');
+    var thead = el('thead'), tr = el('tr');
+    head.forEach(function (h) { tr.appendChild(el('th', null, h)); });
+    thead.appendChild(tr);
+    t.appendChild(thead);
+    var tb = el('tbody');
+    rows.forEach(function (row) {
+      var r = el('tr');
+      row.forEach(function (c) { r.appendChild(el('td', null, c)); });
+      tb.appendChild(r);
+    });
+    t.appendChild(tb);
+    return t;
+  }
+
+  function buildReport() {
+    var state = readState();
+    var r = lastResult || C.calculate(state);
+    var rep = $('report');
+    rep.innerHTML = '';
+
+    var head = el('div', 'rp-head');
+    var left = el('div');
+    left.appendChild(el('div', 'rp-company', COMPANY.name));
+    left.appendChild(el('div', 'rp-phone', 'Hotline: ' + COMPANY.phone));
+    head.appendChild(left);
+    head.appendChild(el('div', 'rp-date', 'Ngày: ' + new Date().toLocaleDateString('vi-VN')));
+    rep.appendChild(head);
+
+    rep.appendChild(el('h1', 'rp-title', 'BÁO CÁO ƯỚC TÍNH DUNG LƯỢNG LƯU TRỮ CAMERA'));
+    rep.appendChild(el('p', 'rp-project', 'Công trình: ' + (state.project.trim() || '……………………………………')));
+    rep.appendChild(el('p', 'rp-client', 'Điện thoại liên hệ: ' + (state.clientPhone.trim() || '……………………')));
+
+    rep.appendChild(el('h2', null, 'Thiết lập chung'));
+    rep.appendChild(table(['Số ngày lưu', 'Dự phòng', 'Cấu hình ổ', 'Số khe HDD'], [[
+      state.days + ' ngày', state.reservePct + '%', RAID_LABELS[state.raid], state.slots + ' khe'
+    ]]));
+
+    rep.appendChild(el('h2', null, 'Các nhóm camera'));
+    rep.appendChild(table(
+      ['Nhóm', 'Số cam', 'Độ phân giải', 'Codec', 'FPS', 'Chế độ ghi', 'Bitrate/cam', 'TB'],
+      state.groups.map(function (g, i) {
+        var s = r.groups[i] || {};
+        return [
+          g.name, String(s.count || 0), C.RESOLUTION_LABELS[g.res], g.codec, String(g.fps),
+          MODE_LABELS[g.mode] + (g.mode === 'motion' ? ' (' + g.activity + '%)' : ''),
+          nf0.format(s.kbps || 0) + ' kbps' + (s.isCustom ? ' *' : ''),
+          fmtTB(s.tb || 0)
+        ];
+      })
+    ));
+    if (r.groups.some(function (g) { return g.isCustom; })) {
+      rep.appendChild(el('p', 'rp-note', '* Bitrate nhập tay.'));
+    }
+
+    rep.appendChild(el('h2', null, 'Kết quả'));
+    rep.appendChild(table(['Dung lượng cần', 'Trên NVR', 'Băng thông ghi', 'Tổng camera', 'Dữ liệu/ngày'], [[
+      fmtTB(r.needTB) + ' TB', '≈ ' + fmtTB(r.needTiB) + ' TiB', nf1.format(r.mbps) + ' Mbps',
+      nf0.format(r.cams), nf1.format(r.gbPerDay) + ' GB'
+    ]]));
+
+    var reco = $('r-reco').textContent;
+    if (reco) rep.appendChild(el('p', 'rp-reco', reco));
+    r.warnings.forEach(function (w) { rep.appendChild(el('p', 'rp-warn', '⚠ ' + w)); });
+
+    var fits = r.options.filter(function (o) { return o.fits; });
+    if (fits.length) {
+      rep.appendChild(el('h2', null, 'Phương án ổ cứng Surveillance'));
+      rep.appendChild(table(['Ổ', 'Số ổ', 'Tổng thô', 'Dùng được', 'Ghi chú'], fits.map(function (o) {
+        return [o.sizeTB + 'TB', String(o.disks), o.rawTB + ' TB', fmtTB(o.usableTB) + ' TB',
+          [o === r.best ? 'Gợi ý' : '', o.note].filter(Boolean).join(' · ')];
+      })));
+    }
+
+    rep.appendChild(el('p', 'rp-foot',
+      'Số liệu là ước tính theo bitrate tham khảo (VBR, cảnh trung bình); thực tế phụ thuộc cảnh quay và cấu hình camera. ' +
+      COMPANY.name + ' · Hotline: ' + COMPANY.phone));
+  }
+
+  // Tên file PDF gợi ý = tiêu đề trang lúc in
+  function pdfFileName() {
+    var proj = $('project').value.trim();
+    var d = new Date();
+    var ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return 'Bao cao dung luong camera' + (proj ? ' - ' + proj : '') + ' - ' + ymd;
+  }
+
+  function exportPdf() {
+    buildReport();
+    var oldTitle = document.title;
+    document.title = pdfFileName();
+    var restore = function () { document.title = oldTitle; window.removeEventListener('afterprint', restore); };
+    window.addEventListener('afterprint', restore);
+    window.print();
+    setTimeout(restore, 3000); // dự phòng cho trình duyệt không có sự kiện afterprint
+  }
+
   function renderRefTable() {
     var tb = document.querySelector('#ref-table tbody');
     Object.keys(C.BASE_KBPS_H265_25FPS).forEach(function (res) {
@@ -177,8 +298,13 @@
 
   // ---------- Khởi động ----------
   function init() {
+    $('brand-name').textContent = COMPANY.name;
+    $('brand-phone').textContent = '☎ Hotline: ' + COMPANY.phone;
+    $('brand-phone').href = 'tel:' + COMPANY.phone.replace(/[^0-9+]/g, '');
     renderRefTable();
     var saved = load();
+    if (saved && saved.project) $('project').value = saved.project;
+    if (saved && saved.clientPhone) $('client-phone').value = saved.clientPhone;
     if (saved && Array.isArray(saved.groups) && saved.groups.length) {
       ['days', 'raid', 'slots'].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
       if (saved.reservePct != null) $('reserve').value = saved.reservePct;
@@ -198,6 +324,10 @@
       addGroup(defaultGroup(groupsEl.querySelectorAll('.group').length + 1));
       update();
     });
+
+    $('export-pdf').addEventListener('click', exportPdf);
+    // Người dùng bấm Ctrl+P / menu In của trình duyệt cũng ra đúng báo cáo
+    window.addEventListener('beforeprint', buildReport);
 
     update();
   }
