@@ -14,6 +14,14 @@ web trả về số TB cần, băng thông ghi và gợi ý số ổ HDD Surveil
 | `app.js` | Đọc form, gọi `calc.js`, hiển thị kết quả |
 | `test/calc.test.js` | Kiểm tra công thức: `node test/calc.test.js` |
 
+## Thông tin công ty và Xuất PDF
+
+- Tên công ty và số điện thoại nằm ở **đầu file `app.js`** (hằng số `COMPANY`). Sửa ở đó là đổi cả header lẫn PDF.
+- Ô **Tên công trình** được lưu lại trên máy như các ô khác.
+- Nút **Xuất PDF** mở hộp thoại In của trình duyệt với một trang báo cáo A4 riêng (công ty, SĐT, công trình, ngày,
+  nhóm camera, kết quả, phương án HDD). Chọn "Lưu dưới dạng PDF" (máy tính/Android) hoặc Chia sẻ → "Lưu vào Tệp" (iPhone).
+  Không dùng thư viện ngoài nên tiếng Việt có dấu luôn hiển thị đúng và chữ trong PDF chọn/copy được.
+
 ## Công thức
 
 ```

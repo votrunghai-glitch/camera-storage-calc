@@ -8,6 +8,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="brand">
+    <div class="brand-inner">
+      <span class="brand-name" id="brand-name">Sao Mai Smartek</span>
+      <a class="brand-phone" id="brand-phone" href="tel:0902209698">☎ 0902 209 698</a>
+    </div>
+  </div>
+
   <header class="top">
     <h1>Tính dung lượng lưu trữ camera</h1>
     <p class="sub">Ước tính số TB cần cho NVR và gợi ý ổ cứng Surveillance</p>
@@ -16,6 +23,12 @@
   <main class="layout">
     <!-- CỘT NHẬP LIỆU -->
     <section class="inputs">
+      <div class="card">
+        <label>Tên công trình
+          <input type="text" id="project" maxlength="120" placeholder="VD: Biệt thự anh Nam – Thảo Điền">
+        </label>
+      </div>
+
       <div id="groups"></div>
       <button type="button" id="add-group" class="btn-secondary">+ Thêm nhóm camera</button>
 
@@ -72,6 +85,8 @@
         </div>
         <p class="reco" id="r-reco"></p>
         <ul class="warnings" id="r-warn"></ul>
+        <button type="button" id="export-pdf" class="btn-primary">Xuất PDF</button>
+        <p class="muted pdf-hint">Trên điện thoại: bấm Xuất PDF → chọn “Lưu dưới dạng PDF” (Android) hoặc nút Chia sẻ → “Lưu vào Tệp” (iPhone).</p>
       </div>
 
       <div class="card">
@@ -119,6 +134,9 @@
   <footer class="foot">
     <p>Công cụ ước tính để tư vấn và báo giá nhanh. Với dự án lớn, đối chiếu thêm Disk Calculator của hãng hoặc bitrate đo thực tế.</p>
   </footer>
+
+  <!-- BÁO CÁO PDF: chỉ hiện khi in / lưu PDF, nội dung do app.js điền -->
+  <section id="report" class="report" aria-hidden="true"></section>
 
   <template id="group-tpl">
     <div class="card group">
